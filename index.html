@@ -1,0 +1,365 @@
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Atrapa el Corazón 15 veces! ❤️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+            font-size: 2rem;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+
+        .score, .timer {
+            font-size: 1.3rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 500px;
+            height: 50vh;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .heart {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #ff2d2d;
+            transform: rotate(45deg);
+            transition: all 0.4s ease;
+            box-shadow: 0 0 15px rgba(255, 45, 45, 0.7);
+            animation: pulse 1.5s infinite;
+            z-index: 10;
+        }
+
+        .heart:before,
+        .heart:after {
+            content: '';
+            width: 50px;
+            height: 50px;
+            background-color: #ff2d2d;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .heart:before {
+            top: -25px;
+            left: 0;
+        }
+
+        .heart:after {
+            top: 0;
+            left: -25px;
+        }
+
+        @keyframes pulse {
+            0% { transform: rotate(45deg) scale(1); }
+            50% { transform: rotate(45deg) scale(1.1); }
+            100% { transform: rotate(45deg) scale(1); }
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+            animation: particleAnimation 1s forwards;
+        }
+
+        @keyframes particleAnimation {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            z-index: 100;
+            display: none;
+        }
+
+        .start-btn, .share-btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: white;
+            color: #ff2d2d;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .start-btn:hover, .share-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>¡Atrapa el Corazón 15 veces en 40 segundos! ❤️</h1>
+    <div class="game-info">
+        <div class="score">Puntos: <span id="score">0</span>/15</div>
+        <div class="timer">Tiempo: <span id="timer">40</span>s</div>
+    </div>
+    <div class="game-container" id="gameContainer">
+        <div class="heart" id="heart"></div>
+    </div>
+    <div class="message" id="message"></div>
+    <div class="controls">
+        <button class="start-btn" id="startBtn">Comenzar</button>
+        <button class="share-btn" id="shareBtn">Compartir</button>
+    </div>
+
+    <script>
+        const heart = document.getElementById('heart');
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const messageElement = document.getElementById('message');
+        const startBtn = document.getElementById('startBtn');
+        const shareBtn = document.getElementById('shareBtn');
+
+        let score = 0;
+        let timeLeft = 40;
+        let gameInterval;
+        let timerInterval;
+        let speed = 1;
+        let isGameRunning = false;
+
+        // Inicia el juego
+        function startGame() {
+            if (isGameRunning) return;
+            
+            isGameRunning = true;
+            score = 0;
+            timeLeft = 40;
+            speed = 1;
+            scoreElement.textContent = score;
+            timerElement.textContent = timeLeft;
+            messageElement.style.display = 'none';
+            startBtn.textContent = "Jugando...";
+            startBtn.disabled = true;
+            
+            moveHeart();
+            
+            // Temporizador
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            // Aumenta la dificultad cada 5 segundos
+            gameInterval = setInterval(() => {
+                speed += 0.2;
+            }, 5000);
+        }
+
+        // Termina el juego
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(timerInterval);
+            clearInterval(gameInterval);
+            startBtn.textContent = "Volver a Jugar";
+            startBtn.disabled = false;
+            
+            if (score >= 15) {
+                showMessage("¡Ganaste! 🎉");
+            } else {
+                showMessage(`¡Perdiste! 😢 (Faltaron ${15 - score} puntos)`);
+            }
+        }
+
+        // Muestra mensaje de resultado
+        function showMessage(text) {
+            messageElement.textContent = text;
+            messageElement.style.display = 'block';
+        }
+
+        // Mueve el corazón lejos del cursor
+        function moveHeart() {
+            if (!isGameRunning) return;
+
+            const containerWidth = gameContainer.clientWidth;
+            const containerHeight = gameContainer.clientHeight;
+            const heartSize = 50;
+
+            // Calcula posición opuesta al cursor
+            const mouseX = parseInt(heart.dataset.mouseX || 0);
+            const mouseY = parseInt(heart.dataset.mouseY || 0);
+            
+            let newX, newY;
+            
+            if (mouseX < containerWidth / 2) {
+                newX = Math.min(containerWidth - heartSize, mouseX + (80 * speed));
+            } else {
+                newX = Math.max(0, mouseX - (80 * speed));
+            }
+            
+            if (mouseY < containerHeight / 2) {
+                newY = Math.min(containerHeight - heartSize, mouseY + (80 * speed));
+            } else {
+                newY = Math.max(0, mouseY - (80 * speed));
+            }
+            
+            // Asegura que no salga de los límites
+            newX = Math.max(0, Math.min(containerWidth - heartSize, newX));
+            newY = Math.max(0, Math.min(containerHeight - heartSize, newY));
+            
+            heart.style.left = `${newX}px`;
+            heart.style.top = `${newY}px`;
+        }
+
+        // Crea partículas al hacer clic
+        function createParticles(x, y) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.background = `hsl(${Math.random() * 60 + 350}, 100%, 70%)`;
+                gameContainer.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 1000);
+            }
+        }
+
+        // Detecta movimiento del mouse
+        gameContainer.addEventListener('mousemove', (e) => {
+            if (!isGameRunning) return;
+            
+            const rect = gameContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Guarda posición del mouse para que el corazón la esquive
+            heart.dataset.mouseX = mouseX;
+            heart.dataset.mouseY = mouseY;
+            
+            // Mueve el corazón cada vez que el cursor se acerca
+            const heartX = parseInt(heart.style.left || 0);
+            const heartY = parseInt(heart.style.top || 0);
+            
+            const distance = Math.sqrt(
+                Math.pow(mouseX - heartX, 2) + 
+                Math.pow(mouseY - heartY, 2)
+            );
+            
+            if (distance < 120) {
+                moveHeart();
+            }
+        });
+
+        // Click en el corazón
+        heart.addEventListener('click', (e) => {
+            if (!isGameRunning) return;
+            
+            e.stopPropagation();
+            score++;
+            scoreElement.textContent = score;
+            
+            const rect = gameContainer.getBoundingClientRect();
+            createParticles(
+                e.clientX - rect.left,
+                e.clientY - rect.top
+            );
+            
+            if (score >= 15) {
+                endGame();
+            } else {
+                moveHeart();
+            }
+        });
+
+        // Click fuera del corazón
+        gameContainer.addEventListener('click', () => {
+            if (isGameRunning) {
+                score = Math.max(0, score - 1);
+                scoreElement.textContent = score;
+            }
+        });
+
+        // Botón de inicio
+        startBtn.addEventListener('click', startGame);
+
+        // Compartir resultado
+        shareBtn.addEventListener('click', () => {
+            const resultText = isGameRunning ?
+                `Estoy jugando al ¡Atrapa el Corazón! ❤️ Llevo ${score}/15 puntos. ¿Podrás superarme?` :
+                score >= 15 ?
+                `¡Gané el desafío del Corazón Esquivo con 15 puntos en ${40 - timeLeft}s! 🎉 ¿Podrás superarme?` :
+                `¡Intenté el desafío del Corazón Esquivo y conseguí ${score}/15 puntos! 😅 ¿Podrás hacerlo mejor?`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '¡Atrapa el Corazón!',
+                    text: resultText,
+                    url: window.location.href
+                });
+            } else {
+                alert(resultText + "\n\nCopia este enlace para jugar: " + window.location.href);
+            }
+        });
+    </script>
+</body>
+</html>
